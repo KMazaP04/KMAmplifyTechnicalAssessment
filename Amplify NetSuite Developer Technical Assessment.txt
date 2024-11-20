@@ -1,0 +1,41 @@
+﻿Solution Highlights
+1. Automatic and Manual Approval Logic:
+   * Opportunities with a totalAmount below $10,000 and in a Open status are automatically approved and transformed into Sales Orders during the mapping stage.(10 governance points).
+   * Opportunities with a totalAmount of $10,000 or more are flagged for manual approval by setting a custom checkbox field (custbody_requires_manual_approval). Also during mapping stage. Record.submitValues(10 governance points).
+   * Opportunities that are approved are just transformed into a sales order.
+2. Sales Order Transformation:
+   * Approved Opportunities are transformed into Sales Orders using the NetSuite record.transform API during the map stage.
+   * This transformation is optimized to handle individual Opportunities efficiently while deferring bulk actions (e.g., email notifications) to the reduce stage.
+3. Email Notifications:
+   * Sales Representatives are notified of newly created Sales Orders via email during the reduce stage, where bulk processing ensures efficiency and scalability. 
+   * We will email out a list to each sales rep of the sales orders created.(20 Governance points)
+4. Performance Optimization:
+   * Leveraging a Map/Reduce architecture ensures parallel processing of Opportunities for scalability, even with daily sync volumes exceeding 500 records.
+   * Error handling is embedded in both mapping and reduction stages to manage retries and avoid data loss during failures..
+Why This Design?
+* Scalability: The Map/Reduce script handles high volumes efficiently, splitting tasks into smaller chunks for parallel processing.
+* Separation of Concerns: Dividing the logic into map and reduce stages ensures clarity and modularity:
+   * Map: Handles individual record evaluation, approval, and transformation.
+   * Reduce: Manages email notifications in bulk for better efficiency. 
+Script Walk Through:
+* Get Input Data:
+   * Query to get need info from oppurtunities(total, status, salesrep, joined to sales rep employee record for email.)
+   * Returns asMappedResults
+* Mapping
+   * Opportunities with a totalAmount below $10,000 and in a Open status are automatically approved and transformed into Sales Orders during the mapping stage.(10 governance points).
+   * Opportunities with a totalAmount of $10,000 or more are flagged for manual approval by setting a custom checkbox field (custbody_requires_manual_approval). Also during mapping stage. Record.submitValues(10 governance points).
+   * Opportunities that are approved are just transformed into a sales order.
+   * These orders are group by there sales rep and passed to the reduce stage
+* Reduce
+   * Take all the sales order transaction ids and add them to an email.
+
+
+Deployment Process
+* Create Script Record for MR. 
+* Create Deployment 
+   * Status - Scheduled
+   * Most fields stay default(Yield - 60 min, buffer size - 1)
+   * Schedule Subtab
+      * Daily Event - Repeat everyday
+      * Repeat - every hour
+   * No end date unchecked.
